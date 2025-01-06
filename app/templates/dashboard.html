@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ESG Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>ESG Data and Prediction</h1>
+
+    <!-- Form for ESG Score Prediction -->
+    <h2>Predict ESG Score</h2>
+    <form method="POST" action="/predict">
+        <label for="country_code">Country Code:</label>
+        <input type="text" name="country_code" id="country_code" value="IND" required><br>
+
+        <label for="indicator">Indicator:</label>
+        <input type="text" name="indicator" id="indicator" value="SP.POP.TOTL" required><br>
+
+        <label for="year">Year:</label>
+        <input type="number" name="year" id="year" value="2022" required><br>
+
+        <button type="submit">Predict</button>
+    </form>
+
+    <hr>
+
+    <!-- Search ESG Data -->
+    <h2>Search ESG Data</h2>
+    <form id="search-form">
+        <label for="search-country">Country:</label>
+        <input type="text" id="search-country" placeholder="Enter country name"><br>
+
+        <label for="search-indicator">Indicator:</label>
+        <input type="text" id="search-indicator" placeholder="Enter indicator"><br>
+
+        <label for="search-year">Year:</label>
+        <input type="number" id="search-year" placeholder="Enter year"><br>
+
+        <button type="button" onclick="searchData()">Search</button>
+    </form>
+
+    <h3>Search Results</h3>
+    <table id="results-table" border="1">
+        <thead>
+            <tr>
+                <th>Country</th>
+                <th>Country Code</th>
+                <th>Indicator</th>
+                <th>Year</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        function searchData() {
+            const country = document.getElementById("search-country").value;
+            const indicator = document.getElementById("search-indicator").value;
+            const year = document.getElementById("search-year").value;
+
+            fetch(`/search?country=${country}&indicator=${indicator}&year=${year}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById("results-table").querySelector("tbody");
+                    tableBody.innerHTML = "";
+
+                    if (data.data) {
+                        data.data.forEach(row => {
+                            const rowElement = `<tr>
+                                <td>${row.Country}</td>
+                                <td>${row["Country Code"]}</td>
+                                <td>${row.Indicator}</td>
+                                <td>${row.Year}</td>
+                                <td>${row.Value}</td>
+                            </tr>`;
+                            tableBody.innerHTML += rowElement;
+                        });
+                    } else if (data.error) {
+                        alert(`Error: ${data.error}`);
+                    }
+                });
+        }
+    </script>
+</body>
+</html>
