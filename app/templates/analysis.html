@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ESG Analysis</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>ESG Analysis and Optimization</h1>
+
+    <!-- Form for Optimization -->
+    <h2>Optimize Green Investments</h2>
+    <button onclick="optimize()">Run Optimization</button>
+
+    <h3>Optimization Results</h3>
+    <table id="optimization-table" border="1">
+        <thead>
+            <tr>
+                <th>Project Name</th>
+                <th>Budget</th>
+                <th>Risk Score</th>
+                <th>ESG Impact Score</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        function optimize() {
+            fetch('/optimize')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById("optimization-table").querySelector("tbody");
+                    tableBody.innerHTML = "";
+
+                    if (data.optimized_projects) {
+                        data.optimized_projects.forEach(project => {
+                            const rowElement = `<tr>
+                                <td>${project["Project Name"]}</td>
+                                <td>${project.Budget}</td>
+                                <td>${project["Risk Score"]}</td>
+                                <td>${project["ESG Impact Score"]}</td>
+                            </tr>`;
+                            tableBody.innerHTML += rowElement;
+                        });
+                    } else if (data.error) {
+                        alert(`Error: ${data.error}`);
+                    }
+                });
+        }
+    </script>
+</body>
+</html>

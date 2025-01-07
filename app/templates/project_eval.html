@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Project Evaluation</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Project Evaluation</h1>
+
+    <h2>All Projects</h2>
+    <button onclick="loadProjects()">Load Project Data</button>
+
+    <h3>Projects List</h3>
+    <table id="projects-table" border="1">
+        <thead>
+            <tr>
+                <th>Project Name</th>
+                <th>Budget</th>
+                <th>Risk Score</th>
+                <th>ESG Impact Score</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        function loadProjects() {
+            fetch('/project_eval')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById("projects-table").querySelector("tbody");
+                    tableBody.innerHTML = "";
+
+                    if (data.projects) {
+                        data.projects.forEach(project => {
+                            const rowElement = `<tr>
+                                <td>${project["Project Name"]}</td>
+                                <td>${project.Budget}</td>
+                                <td>${project["Risk Score"]}</td>
+                                <td>${project["ESG Impact Score"]}</td>
+                            </tr>`;
+                            tableBody.innerHTML += rowElement;
+                        });
+                    } else if (data.error) {
+                        alert(`Error: ${data.error}`);
+                    }
+                });
+        }
+    </script>
+</body>
+</html>

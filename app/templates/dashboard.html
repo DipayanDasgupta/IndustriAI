@@ -9,7 +9,7 @@
 
     <!-- Form for ESG Score Prediction -->
     <h2>Predict ESG Score</h2>
-    <form method="POST" action="/predict">
+    <form method="POST" action="/predict" id="predict-form">
         <label for="country_code">Country Code:</label>
         <input type="text" name="country_code" id="country_code" value="IND" required><br>
 
@@ -21,6 +21,7 @@
 
         <button type="submit">Predict</button>
     </form>
+    <p id="prediction-result"></p>
 
     <hr>
 
@@ -38,7 +39,6 @@
 
         <button type="button" onclick="searchData()">Search</button>
     </form>
-
     <h3>Search Results</h3>
     <table id="results-table" border="1">
         <thead>
@@ -60,6 +60,11 @@
             const indicator = document.getElementById("search-indicator").value;
             const year = document.getElementById("search-year").value;
 
+            if (!country && !indicator && !year) {
+                alert("Please provide at least one search parameter.");
+                return;
+            }
+
             fetch(`/search?country=${country}&indicator=${indicator}&year=${year}`)
                 .then(response => response.json())
                 .then(data => {
@@ -80,8 +85,33 @@
                     } else if (data.error) {
                         alert(`Error: ${data.error}`);
                     }
+                })
+                .catch(err => {
+                    alert(`An error occurred: ${err}`);
                 });
         }
+
+        document.getElementById("predict-form").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            fetch("/predict", {
+                method: "POST",
+                body: formData,
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const resultElement = document.getElementById("prediction-result");
+                    if (data.esg_score) {
+                        resultElement.textContent = `Predicted ESG Score: ${data.esg_score}`;
+                    } else if (data.error) {
+                        resultElement.textContent = `Error: ${data.error}`;
+                    }
+                })
+                .catch(err => {
+                    alert(`An error occurred: ${err}`);
+                });
+        });
     </script>
 </body>
 </html>

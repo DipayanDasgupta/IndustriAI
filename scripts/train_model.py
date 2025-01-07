@@ -1,30 +1,69 @@
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.preprocessing import MinMaxScaler
 import pickle
+import os
 
-# Train ESG Scoring Model
-esg_data = pd.read_csv("../data/collected_data.csv")
-X_esg = esg_data[['Year']].astype(float)  # Example feature
-y_esg = esg_data['Value']
+# Define paths
+data_path = "../data/collected_data.csv"
+model_path = "../models/esg_model.pkl"
+feature_columns_path = "../models/feature_columns.pkl"
 
-X_train_esg, X_test_esg, y_train_esg, y_test_esg = train_test_split(X_esg, y_esg, test_size=0.2, random_state=42)
-esg_model = RandomForestRegressor(n_estimators=100, random_state=42)
-esg_model.fit(X_train_esg, y_train_esg)
+# Create necessary directories if not exist
+os.makedirs(os.path.dirname(model_path), exist_ok=True)
 
-with open("../models/esg_model.pkl", "wb") as f:
-    pickle.dump(esg_model, f)
-print("ESG model trained and saved.")
+# Load the dataset
+print("Loading data...")
+esg_data = pd.read_csv(data_path)
+print("Data loaded successfully.")
 
-# Train Optimization Model (example)
-project_data = pd.read_csv("../data/projects.csv")
-X_proj = project_data[['Budget', 'Risk Score']]
-y_proj = project_data['Budget']  # Placeholder for a target variable
+# Data Cleaning
+if "Value" not in esg_data.columns:
+    raise KeyError("The dataset must contain a 'Value' column for the ESG score.")
+esg_data = esg_data.dropna()
 
-X_train_proj, X_test_proj, y_train_proj, y_test_proj = train_test_split(X_proj, y_proj, test_size=0.2, random_state=42)
-project_model = RandomForestRegressor(n_estimators=100, random_state=42)
-project_model.fit(X_train_proj, y_train_proj)
+# Normalize Year
+esg_data["Year"] = esg_data["Year"] - esg_data["Year"].min()
 
-with open("../models/optimization_model.pkl", "wb") as f:
-    pickle.dump(project_model, f)
-print("Optimization model trained and saved.")
+# Encode categorical features
+print("Encoding features...")
+esg_data_encoded = pd.get_dummies(esg_data[["Country Code", "Indicator", "Year"]], drop_first=True)
+
+# Save feature columns for future predictions
+feature_columns = esg_data_encoded.columns.tolist()
+with open(feature_columns_path, "wb") as f:
+    pickle.dump(feature_columns, f)
+print(f"Feature columns saved to {feature_columns_path}")
+
+# Scale features and target
+scaler = MinMaxScaler()
+X = scaler.fit_transform(esg_data_encoded)
+y = scaler.fit_transform(esg_data["Value"].values.reshape(-1, 1)).ravel()
+
+# Train-test split
+print("Splitting data...")
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Model Training
+print("Training model...")
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Evaluate model
+print("Evaluating model...")
+y_pred = model.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+mae = mean_absolute_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Mean Squared Error: {mse}")
+print(f"Mean Absolute Error: {mae}")
+print(f"R² Score: {r2}")
+
+# Save the model
+print("Saving the model...")
+with open(model_path, "wb") as f:
+    pickle.dump(model, f)
+print(f"Model saved to {model_path}")
